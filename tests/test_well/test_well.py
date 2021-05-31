@@ -66,6 +66,12 @@ def test_import(loadwell1):
     tsetup.assert_equal(mywell.xpos, 461809.59, "XPOS")
     tsetup.assert_equal(mywell.ypos, 5932990.36, "YPOS")
     tsetup.assert_equal(mywell.wellname, "OP_1", "WNAME")
+    # rkb
+    # nrow
+    # ncol
+    # nlogs
+    # lognames_all
+    # lognames
 
     logger.info(mywell.get_logtype("Zonelog"))
     logger.info(mywell.get_logrecord("Zonelog"))
@@ -136,6 +142,13 @@ def test_change_a_lot_of_stuff(loadwell1):
     assert mywell.name == "OP_1"
     mywell.name = "OP_1_EDITED"
     assert mywell.name == "OP_1_EDITED"
+    # safewellname?
+    # xwellname
+    # truewellname
+    # isdiscrete
+    # set_logtype
+    # happy path: set_logrecord
+    # get_logrecord_codename
 
     mywell.rename_log("Poro", "PORO")
     assert "PORO" in mywell.lognames
@@ -461,7 +474,7 @@ def test_mask_shoulderbeds_use_tvd_md(loadwell3):
     assert "no mdlogname attribute present" in str(verr)
 
     usewell.geometrics()  # to create Q_MDEPTH as mdlogname
-
+    # verify that this tests geometrics (and could it be done more explicitly?)
     usewell.mask_shoulderbeds(["ZONELOG"], ["GR"], nsamples={"md": 1.6})
     assert not np.isnan(mywell.dataframe.at[1595, "GR"])
     assert np.isnan(usewell.dataframe.at[1595, "GR"])
@@ -740,3 +753,40 @@ def test_create_surf_distance_log_more(loadwell1):
     print(res)
 
     assert res["MATCH2"] == pytest.approx(93.67, abs=0.03)
+
+
+def test_ensure_consistency():
+    pass
+
+
+def test_copy():
+    pass
+
+
+def test_create_relative_hlen():
+    pass
+
+
+def test_truncate_parallel_path():
+    pass
+
+
+def test_map_overlap():
+    pass
+
+
+def test_limit_tvd():
+    pass
+
+
+def test_downsample():
+    pass
+
+
+def test_get_polygons():
+    pass
+
+
+def test_get_fence_poly():
+    # get_fence_polyline ?
+    pass

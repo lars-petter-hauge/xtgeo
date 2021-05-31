@@ -125,16 +125,32 @@ def _extract_ztops(
     azi = -999.0  # tmp so far
 
     usezonerange = range(0, 99999)
-    if isinstance(zonelist, tuple) and len(zonelist) == 2:
+    if isinstance(zonelist, tuple):
+        if len(zonelist) != 2:
+            raise ValueError(
+                f"zonelist given as tuple must be of length 2, was {len(zonelist)}"
+            )
         usezonerange = range(zonelist[0], zonelist[1] + 1)
-    elif isinstance(zonelist, list) and len(zonelist) > 1:
+    elif isinstance(zonelist, list):
+        if len(zonelist) == 1:
+            raise ValueError(
+                f"zonelist given as list must contain two or more"
+                f" elements, had 1: {zonelist}"
+            )
         usezonerange = zonelist
     else:
-        raise ValueError("Something is wrong with zonelist input")
+        raise TypeError(
+            f"zonelist must be either list (of two or more elements) or "
+            f"a tuple (with two elements representing start and stop), was"
+            f"{type(zonelist)}"
+        )
 
     # check if increasing monotonic and with no jumps:
     if not all(i + 1 == j for i, j in zip(usezonerange, usezonerange[1:])):
-        raise ValueError("The zonelist is not valid! C.f. documentation")
+        raise ValueError(
+            f"zonelist must be strictly increasing with increment of one,"
+            f" was {usezonerange}"
+        )
 
     iundef = const.UNDEF_INT
     iundeflimit = const.UNDEF_INT_LIMIT
