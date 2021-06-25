@@ -21,8 +21,6 @@ def get_zonation_points(self, tops, incl_limit, top_prefix, zonelist, use_undef)
 
     Args, see calling routine
     """
-
-    zlist = []
     # get the relevant logs:
 
     self.geometrics()  # note the caller has made a copy of the true self
@@ -124,7 +122,6 @@ def _extract_ztops(
 
     azi = -999.0  # tmp so far
 
-    usezonerange = range(0, 99999)
     if isinstance(zonelist, tuple):
         if len(zonelist) != 2:
             raise ValueError(

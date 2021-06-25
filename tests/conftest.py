@@ -94,3 +94,9 @@ def testpath(request):
         testdatapath = environ_path
 
     return testdatapath
+
+
+@pytest.fixture()
+def setup_tmpdir(tmpdir):
+    with tmpdir.as_cwd():
+        yield
