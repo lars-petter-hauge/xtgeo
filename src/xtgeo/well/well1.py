@@ -1019,7 +1019,7 @@ class Well:
         distance = []
         previous_x, previous_y = xv[0], yv[0]
         for i, (x, y) in enumerate(zip(xv, yv)):
-            distance.append(math.dist((previous_x, previous_y), (x, y)))
+            distance.append(math.hypot((previous_x - x), (y - previous_y)))
             previous_x, previous_y = x, y
 
         self._df["R_HLEN"] = pd.Series(np.cumsum(distance), index=self._df.index)
