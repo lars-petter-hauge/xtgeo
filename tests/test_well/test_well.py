@@ -760,6 +760,17 @@ def test_ensure_consistency():
 
 
 def test_copy():
+    # wellstring = """1.01
+    # Unknown
+    # name 0 0 0
+    # 1
+    # Zonelog DISC 1 zone1 2 zone2 3 zone3
+    # 0 0 0 nan
+    # 1 2 3 1
+    # 4 5 6 1
+    # 7 8 9 2
+    # 10 11 12 2
+    # 13 14 15 3"""
     pass
 
 
