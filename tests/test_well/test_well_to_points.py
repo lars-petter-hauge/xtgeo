@@ -13,23 +13,6 @@ logger = xtg.basiclogger(__name__)
 WFILE = TPATH / "wells/etc/otest.rmswell"
 
 
-@pytest.fixture()
-def string_to_well(setup_tmpdir):
-    def wrapper(wellstring, kwargs):
-        """It is currently not possible to initiate from spec.
-        We work around by dumping to csv before reloading
-        """
-        fpath = "well_data.rmswell"
-        with open(fpath, "w") as fh:
-            fh.write(wellstring)
-
-        well = Well(fpath, **kwargs)
-
-        return well
-
-    yield wrapper
-
-
 def test_wellzone_to_points():
     """Import well from file and put zone boundaries to a Pandas object."""
 
@@ -105,7 +88,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone2
 )
 def test_simple_points(well_spec, expected_result, string_to_well):
     kwargs = {"zonelogname": "Zonelog"}
-    well = string_to_well(well_spec, kwargs)
+    well = string_to_well(well_spec, **kwargs)
     points = well.get_zonation_points(use_undef=False, tops=True, zonelist=[1, 2])
     # We are only getting a single point here, is that correct behaviour?
     # Unless the points are only supposed to be between zones, I would expect two
@@ -130,7 +113,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
 13 14 15 3
 """
     kwargs = {"zonelogname": "Zonelog"}
-    well = string_to_well(wellstring, kwargs)
+    well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(use_undef=False, tops=True, zonelist=[1, 2, 3])
     expected_result = {"X_UTME": [7.0, 13.0], "Y_UTMN": [8.0, 14.0]}
     assert {
@@ -160,7 +143,7 @@ def test_break_zonation(string_to_well):
     13 14 15 3
     """
     kwargs = {"zonelogname": "Zonelog"}
-    well = string_to_well(wellstring, kwargs)
+    well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(use_undef=False, tops=True, zonelist=[1, 2, 3])
     expected_result = {
         "X_UTME": [4.0, 4.0, 10.0, 13.0],
@@ -194,7 +177,7 @@ Zonelog DISC 1 zone1 2 zone2
 3 4 5 2
 """
     kwargs = {"zonelogname": "Zonelog"}
-    well = string_to_well(wellstring, kwargs)
+    well = string_to_well(wellstring, **kwargs)
     with pytest.raises(error_type, match=error_message):
         well.get_zonation_points(use_undef=False, tops=True, zonelist=zonelist)
 
@@ -221,7 +204,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
 13 14 15 3
 """
     kwargs = {"zonelogname": "Zonelog"}
-    well = string_to_well(wellstring, kwargs)
+    well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(use_undef=False, tops=tops_flag, zonelist=[2, 3])
     assert {
         "X_UTME": points["X_UTME"].to_list(),
@@ -254,7 +237,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3
 13 14 15 3
 """
     kwargs = {"zonelogname": "Zonelog"}
-    well = string_to_well(wellstring, kwargs)
+    well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(
         use_undef=False, tops=False, zonelist=(1, 5), incl_limit=include_limit
     )
@@ -315,7 +298,7 @@ Zonelog DISC 1 zone1 2 zone2 3 zone3 4 zone4
 16 17 18 4
 """
     kwargs = {"zonelogname": "Zonelog"}
-    well = string_to_well(wellstring, kwargs)
+    well = string_to_well(wellstring, **kwargs)
     points = well.get_zonation_points(
         use_undef=False,
         tops=True,

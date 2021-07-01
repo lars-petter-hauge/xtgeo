@@ -759,23 +759,139 @@ def test_ensure_consistency():
     pass
 
 
-def test_copy():
-    # wellstring = """1.01
-    # Unknown
-    # name 0 0 0
-    # 1
-    # Zonelog DISC 1 zone1 2 zone2 3 zone3
-    # 0 0 0 nan
-    # 1 2 3 1
-    # 4 5 6 1
-    # 7 8 9 2
-    # 10 11 12 2
-    # 13 14 15 3"""
-    pass
+def test_copy(string_to_well):
+    wellstring = """1.01
+    Unknown
+    name 0 0 0
+    1
+    Zonelog DISC 1 zone1 2 zone2 3 zone3
+    0 0 0 nan
+    1 2 3 1
+    4 5 6 1
+    7 8 9 2
+    10 11 12 2
+    13 14 15 3"""
+    well = string_to_well(wellstring)
+    well_copy = well.copy()
+    assert well.dataframe.equals(well_copy.dataframe)
+    assert well.lognames == well_copy.lognames
+    assert well.name == well_copy.name
+    assert well.wname == well_copy.wname
+    assert well.rkb == well_copy.rkb
+    assert (well.xpos, well.ypos) == (well_copy.xpos, well_copy.ypos)
+    assert well.lognames_all == well_copy.lognames_all
+    assert well.lognames == well_copy.lognames
 
 
-def test_create_relative_hlen():
-    pass
+@pytest.mark.parametrize(
+    "well_definition, expected_hlen",
+    [
+        (
+            """1.01
+    Unknown
+    name 0 0 0
+    1
+    Zonelog DISC 1 zone1 2 zone2 3 zone3
+    1 1 1 nan
+    1 2 1 1
+    1 3 1 1
+    1 4 1 2
+    1 5 1 2
+    1 6 1 3""",
+            [0, 1, 2, 3, 4, 5],
+        ),
+        (
+            """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+        1 1 1 nan
+        2 1 1 1
+        3 1 1 1
+        4 1 1 2
+        5 1 1 2
+        6 1 1 3""",
+            [0, 1, 2, 3, 4, 5],
+        ),
+        (
+            """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+        1 1 1 nan
+        2 1 2 1
+        3 1 4 1
+        4 1 4 2
+        5 1 5 2
+        6 1 6 3""",
+            [0, 1, 2, 3, 4, 5],
+        ),
+        (
+            """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+        1 1 1 nan
+        2 2 1 1
+        3 3 1 1
+        4 4 1 2
+        5 5 1 2
+        6 6 1 3""",
+            [
+                0.0,
+                1.4142135623730951,
+                2.8284271247461903,
+                4.242640687119286,
+                5.656854249492381,
+                7.0710678118654755,
+            ],
+        ),
+        (
+            """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+        1 1 1 nan
+        2 3 1 1
+        3 5 1 1
+        4 9 1 2
+        5 50 1 2
+        50 180 1 3""",
+            [
+                0.0,
+                2.23606797749979,
+                4.47213595499958,
+                8.595241580617241,
+                49.607434889436995,
+                187.17559981141304,
+            ],
+        ),
+    ],
+)
+def test_create_relative_hlen(string_to_well, well_definition, expected_hlen):
+    well = string_to_well(well_definition)
+    well.create_relative_hlen()
+    assert well.dataframe["R_HLEN"].to_list() == expected_hlen
+
+
+def test_speed_new(string_to_well):
+    well_definition = """1.01
+        Unknown
+        name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for i in range(1, 10000):
+        well_definition += f"\n        {i} {i} 1 1"
+
+    well = string_to_well(well_definition)
+    t0 = xtg.timer()
+    well.create_relative_hlen()
+    print(f"Run time: {xtg.timer(t0)}")
 
 
 def test_truncate_parallel_path():
@@ -786,18 +902,126 @@ def test_map_overlap():
     pass
 
 
-def test_limit_tvd():
-    pass
+@pytest.mark.parametrize(
+    "lower_limit, upper_limit, expected_result",
+    [
+        (0, 1000, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        (0, 9, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        (1, 8, [1, 2, 3, 4, 5, 6, 7, 8]),
+        (2, 5, [2, 3, 4, 5]),
+        (10, 0, []),
+    ],
+)
+def test_limit_tvd(string_to_well, upper_limit, lower_limit, expected_result):
+    well_definition = """1.01
+            Unknown
+            custom_name 0 0 0
+            1
+            Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for i in range(10):
+        well_definition += f"\n        {i} {i} {i} 1"
+
+    well = string_to_well(well_definition)
+    well.limit_tvd(lower_limit, upper_limit)
+    assert well.dataframe["Z_TVDSS"].to_list() == expected_result
 
 
-def test_downsample():
-    pass
+@pytest.mark.parametrize(
+    "input_points, expected_points",
+    [(range(10), [0, 4, 8, 9]), ([1, 10, 11, 12, 13, 14, 100, 10000], [1, 13, 10000])],
+)
+def test_downsample(string_to_well, input_points, expected_points):
+    well_definition = """1.01
+            Unknown
+            custom_name 0 0 0
+            1
+            Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for i in input_points:
+        well_definition += f"\n        {i} {i} {i} 1"
+
+    well = string_to_well(well_definition)
+    well.downsample()
+    assert {
+        "X_UTME": well.dataframe["X_UTME"].to_list(),
+        "Y_UTMN": well.dataframe["Y_UTMN"].to_list(),
+        "Z_TVDSS": well.dataframe["Z_TVDSS"].to_list(),
+    } == {
+        "X_UTME": expected_points,
+        "Y_UTMN": expected_points,
+        "Z_TVDSS": expected_points,
+    }
 
 
-def test_get_polygons():
-    pass
+@pytest.mark.parametrize(
+    "input_points, expected_points",
+    [(range(10), [0, 4, 8]), ([1, 10, 11, 12, 13, 14, 100, 10000], [1, 13])],
+)
+def test_downsample_not_keeplast(string_to_well, input_points, expected_points):
+    well_definition = """1.01
+            Unknown
+            custom_name 0 0 0
+            1
+            Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for i in input_points:
+        well_definition += f"\n        {i} {i} {i} 1"
+
+    well = string_to_well(well_definition)
+    well.downsample(keeplast=False)
+    assert {
+        "X_UTME": well.dataframe["X_UTME"].to_list(),
+        "Y_UTMN": well.dataframe["Y_UTMN"].to_list(),
+        "Z_TVDSS": well.dataframe["Z_TVDSS"].to_list(),
+    } == {
+        "X_UTME": expected_points,
+        "Y_UTMN": expected_points,
+        "Z_TVDSS": expected_points,
+    }
 
 
-def test_get_fence_poly():
-    # get_fence_polyline ?
+def test_get_polygons(string_to_well):
+    well_definition = """1.01
+        Unknown
+        custom_name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3"""
+
+    for (x, y, z) in zip(
+        np.random.random(10), np.random.random(10), np.random.random(10)
+    ):
+        well_definition += f"\n        {x} {y} {z} 1"
+
+    well = string_to_well(well_definition)
+    polygons = well.get_polygons()
+    assert well.dataframe["X_UTME"].to_list() == pytest.approx(
+        polygons.dataframe["X_UTME"].to_list()
+    )
+    assert well.dataframe["Y_UTMN"].to_list() == pytest.approx(
+        polygons.dataframe["Y_UTMN"].to_list()
+    )
+    assert well.dataframe["X_UTME"].to_list() == pytest.approx(
+        polygons.dataframe["X_UTME"].to_list()
+    )
+    assert "Zonelog" not in polygons.dataframe.columns
+    assert "NAME" in polygons.dataframe.columns
+    assert polygons.name == "custom_name"
+
+
+def test_get_polygons_skipname(string_to_well):
+    well_definition = """1.01
+        Unknown
+        custom_name 0 0 0
+        1
+        Zonelog DISC 1 zone1 2 zone2 3 zone3
+                1 1 1 1"""
+
+    well = string_to_well(well_definition)
+    polygons = well.get_polygons(skipname=True)
+    assert "NAME" not in polygons.dataframe.columns
+    assert polygons.name == "custom_name"
+
+
+def test_get_fence_poly(string_to_well):
     pass
