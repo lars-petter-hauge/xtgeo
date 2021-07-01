@@ -50,9 +50,7 @@ import xtgeo
 
 DEBUG = 0
 MLS = 10000000.0
-_DEFAULT_TEST_PATH = (
-    pathlib.Path(__file__).parent.parent.parent.parent.parent / "xtgeo-testdata"
-)
+
 
 HEADER = "\033[1;96m"
 OKBLUE = "\033[94m"
@@ -228,7 +226,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
         self._loggingname = ""
         self._test_env = True
         self._tmpdir = "TMP"
-        self._testpath = os.environ.get("XTG_TESTPATH", _DEFAULT_TEST_PATH)
+        self._testpath = "../xtgeo-testdata"
         self._bigtests = None
         self._showrtwarnings = True
 
@@ -245,6 +243,9 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
 
         if loggingformat is not None:
             self._lformatlevel = int(loggingformat)
+
+        if "XTG_TESTPATH" in os.environ:
+            self._testpath = os.environ.get("XTG_TESTPATH")
 
     @property
     def bigtests(self):
@@ -454,7 +455,7 @@ class XTGeoDialog(object):  # pylint: disable=too-many-public-methods
             if not os.path.isdir(tmppath):
                 raise
 
-        tstpath = os.environ.get("XTG_TESTPATH", _DEFAULT_TEST_PATH)
+        tstpath = os.environ.get("XTG_TESTPATH", "../xtgeo-testdata")
         if not os.path.isdir(tstpath):
             raise RuntimeError("Test path is not valid: {}".format(tstpath))
 
